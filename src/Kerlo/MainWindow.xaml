@@ -243,31 +243,46 @@
           <StackPanel x:Name="PerformancePage" Visibility="Collapsed">
             <Border Style="{StaticResource PanelCard}" Margin="0,0,0,18">
               <StackPanel>
-                <DockPanel Margin="0,0,0,15">
-                  <TextBlock Text="CPU history" FontSize="16" FontWeight="SemiBold"/>
-                  <TextBlock x:Name="HistoryCpuValue" Text="—" Foreground="{StaticResource AccentBrush}"
-                             FontSize="15" FontWeight="SemiBold" DockPanel.Dock="Right"/>
-                </DockPanel>
+                <Grid Margin="0,0,0,15">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Text="CPU history" FontSize="16" FontWeight="SemiBold"
+                             TextTrimming="CharacterEllipsis" Margin="0,0,18,0" VerticalAlignment="Center"/>
+                  <TextBlock Grid.Column="1" x:Name="HistoryCpuValue" Text="—" Foreground="{StaticResource AccentBrush}"
+                             FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                </Grid>
                 <graphs:TrendGraph x:Name="CpuHistoryChart" Height="180"/>
               </StackPanel>
             </Border>
             <Border Style="{StaticResource PanelCard}" Margin="0,0,0,18">
               <StackPanel>
-                <DockPanel Margin="0,0,0,15">
-                  <TextBlock Text="Memory pressure" FontSize="16" FontWeight="SemiBold"/>
-                  <TextBlock x:Name="HistoryMemoryValue" Text="—" Foreground="{StaticResource AccentBrush}"
-                             FontSize="15" FontWeight="SemiBold" DockPanel.Dock="Right"/>
-                </DockPanel>
+                <Grid Margin="0,0,0,15">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Text="Memory pressure" FontSize="16" FontWeight="SemiBold"
+                             TextTrimming="CharacterEllipsis" Margin="0,0,18,0" VerticalAlignment="Center"/>
+                  <TextBlock Grid.Column="1" x:Name="HistoryMemoryValue" Text="—" Foreground="{StaticResource AccentBrush}"
+                             FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                </Grid>
                 <graphs:TrendGraph x:Name="MemoryHistoryChart" Height="180"/>
               </StackPanel>
             </Border>
             <Border Style="{StaticResource PanelCard}">
               <StackPanel>
-                <DockPanel Margin="0,0,0,15">
-                  <TextBlock Text="Download throughput" FontSize="16" FontWeight="SemiBold"/>
-                  <TextBlock x:Name="HistoryNetworkValue" Text="—" Foreground="{StaticResource AccentBrush}"
-                             FontSize="15" FontWeight="SemiBold" DockPanel.Dock="Right"/>
-                </DockPanel>
+                <Grid Margin="0,0,0,15">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Text="Download throughput" FontSize="16" FontWeight="SemiBold"
+                             TextTrimming="CharacterEllipsis" Margin="0,0,18,0" VerticalAlignment="Center"/>
+                  <TextBlock Grid.Column="1" x:Name="HistoryNetworkValue" Text="—" Foreground="{StaticResource AccentBrush}"
+                             FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                </Grid>
                 <graphs:TrendGraph x:Name="NetworkHistoryChart" Height="150"/>
                 <TextBlock Text="Session history is held in memory and resets when Kerlo closes. Export it before exiting."
                            Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,14,0,0"/>
