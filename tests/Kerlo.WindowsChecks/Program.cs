@@ -19,6 +19,12 @@ Assert(second.UsedMemoryBytes > 0 && second.UsedMemoryBytes <= second.TotalMemor
 Assert(second.CpuPercent >= 0 && second.CpuPercent <= 100, "CPU measurement within valid bounds");
 Assert(second.Timestamp > first.Timestamp, "Windows samples advance in time");
 Assert(second.Processes.Count >= 1, "Process enumeration returns live processes");
+var systemSnapshot = System.Diagnostics.Process.GetProcesses();
+var systemProcessCount = systemSnapshot.Length;
+foreach (var process in systemSnapshot) process.Dispose();
+// Process churn is expected between snapshots; losing half the list is not.
+Assert(second.Processes.Count >= Math.Max(1, (int)Math.Floor(systemProcessCount * 0.80)),
+    $"Process enumeration covers at least 80% of a contemporaneous Windows PID snapshot ({second.Processes.Count}/{systemProcessCount})");
 Assert(second.Processes.Select(p => p.Pid).Distinct().Count() == second.Processes.Count,
     "Process enumeration contains unique PIDs");
 Assert(second.Processes.All(p => p.WorkingSetBytes >= 0 && p.CpuPercent is >= 0 and <= 100),
