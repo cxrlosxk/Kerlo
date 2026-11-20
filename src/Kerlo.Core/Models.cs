@@ -1,6 +1,12 @@
 namespace Kerlo.Core;
 
-public sealed record ProcessSample(int Pid, string Name, long WorkingSetBytes, double CpuPercent);
+/// <summary>
+  /// CPU and working-set bytes are independent telemetry readings. Protected processes
+  /// are still enumerated even when one or both measurements are inaccessible.
+  /// </summary>
+public sealed record ProcessSample(
+    int Pid, string Name, long WorkingSetBytes, double CpuPercent,
+    bool CpuAvailable = true, bool MemoryAvailable = true);
 
 public sealed record AppGroup(
     string Name,

@@ -19,6 +19,13 @@ Check(ProcessGrouping.Normalize("chrome.exe") == "Google Chrome", "browser norma
 Check(ProcessGrouping.Normalize("steamwebhelper") == "Steam", "app helper grouping");
 Check(ProcessGrouping.Normalize("Marvel-Win64-Shipping") == "Marvel Rivals", "Marvel Rivals game naming");
 Check(ProcessGrouping.Normalize("unrecognized") == "unrecognized", "unknown process retained");
+var protectedSample = new ProcessSample(404, "Protected process", 0, 0,
+    CpuAvailable: false, MemoryAvailable: false);
+Check(!protectedSample.CpuAvailable && !protectedSample.MemoryAvailable,
+    "Protected process unavailable metrics are explicit");
+Check(ProcessGrouping.Group([protectedSample])[0].ProcessCount == 1,
+    "Protected process remains in process grouping");
+
 
 var list = new[] { new ProcessSample(1, "chrome", 1_000_000, 8),
     new ProcessSample(2, "chrome.exe", 2_000_000, 7),

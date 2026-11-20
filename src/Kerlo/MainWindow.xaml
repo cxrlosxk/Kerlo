@@ -161,7 +161,7 @@
                     <DataGrid.Columns>
                       <DataGridTextColumn Header="APPLICATION" Binding="{Binding Name}" Width="*"/>
                       <DataGridTextColumn Header="PROCESSES" Binding="{Binding ProcessCount}" Width="105"/>
-                      <DataGridTextColumn Header="MEMORY" Binding="{Binding MemoryDisplay}" Width="115"/>
+                      <DataGridTextColumn Header="WORKING SET" Binding="{Binding MemoryDisplay}" Width="130"/>
                     </DataGrid.Columns>
                   </DataGrid>
                 </StackPanel>
@@ -194,7 +194,7 @@
                 <DockPanel Margin="0,0,0,15" LastChildFill="False">
                   <StackPanel>
                     <TextBlock Text="Understand what's running" FontSize="17" FontWeight="SemiBold"/>
-                    <TextBlock Text="Grouped applications are easier to read than a list of identical helper processes."
+                    <TextBlock Text="Process groups combine related executables. Working-set figures include shared pages and are not directly comparable to Task Manager's Processes memory column."
                                Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap"/>
                   </StackPanel>
                   <StackPanel DockPanel.Dock="Right" Width="230" VerticalAlignment="Center">

@@ -76,25 +76,49 @@ public sealed class WindowsSampler : IDisposable
     {
         var readings = new List<ProcessSample>();
         var next = new Dictionary<int, TimeSpan>();
+
+        // Windows exposes more process IDs than unprivileged callers can inspect.
+        // Do not omit a live PID merely because CPU or working-set access is denied.
         foreach (var process in Process.GetProcesses())
         {
             using (process)
             {
+                int pid;
+                try { pid = process.Id; }
+                catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+                { continue; }
+
+                string name;
+                try { name = process.ProcessName; }
+                catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException)
+                { name = "Protected process"; }
+
+                long workingSet = 0;
+                bool memoryAvailable = false;
                 try
                 {
-                    var pid = process.Id;
-                    var name = process.ProcessName;
-                    var workingSet = Math.Max(0, process.WorkingSet64);
-                    var totalTime = process.TotalProcessorTime;
-                    var cpu = _previousProcessCpu.TryGetValue(pid, out var old) && totalTime >= old
-                        ? Calculations.CpuPercentage(totalTime - old, elapsed, Environment.ProcessorCount) : 0;
-                    next[pid] = totalTime;
-                    readings.Add(new ProcessSample(pid, name, workingSet, cpu));
+                    workingSet = Math.Max(0, process.WorkingSet64);
+                    memoryAvailable = true;
                 }
                 catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException)
+                { /* Keep the PID but do not invent a working-set value. */ }
+
+                double cpu = 0;
+                bool cpuAvailable = false;
+                try
                 {
-                    // Processes may exit or be protected while sampled.
+                    var totalTime = process.TotalProcessorTime;
+                    cpu = _previousProcessCpu.TryGetValue(pid, out var old) && totalTime >= old
+                        ? Calculations.CpuPercentage(totalTime - old, elapsed, Environment.ProcessorCount)
+                        : 0;
+                    cpuAvailable = true;
+                    next[pid] = totalTime;
                 }
+                catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException)
+                { /* Inaccessible CPU time is unavailable, not zero. */ }
+
+                readings.Add(new ProcessSample(pid, name, workingSet, cpu,
+                    cpuAvailable, memoryAvailable));
             }
         }
         _previousProcessCpu.Clear();

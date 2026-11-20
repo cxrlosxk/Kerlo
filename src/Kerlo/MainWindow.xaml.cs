@@ -342,8 +342,14 @@ public partial class MainWindow : Window
         public required AppGroup Model { get; init; }
         public string Name => Model.Name;
         public int ProcessCount => Model.ProcessCount;
-        public string CpuDisplay => Calculations.Percent(Model.CpuPercent);
-        public string MemoryDisplay => Calculations.Bytes(Model.WorkingSetBytes);
+        public string CpuDisplay =>
+            Model.Processes.All(p => !p.CpuAvailable) ? "N/A" :
+            (Model.Processes.Any(p => !p.CpuAvailable) ? "≥ " : "") +
+            Calculations.Percent(Model.CpuPercent);
+        public string MemoryDisplay =>
+            Model.Processes.All(p => !p.MemoryAvailable) ? "N/A" :
+            (Model.Processes.Any(p => !p.MemoryAvailable) ? "≥ " : "") +
+            Calculations.Bytes(Model.WorkingSetBytes);
         public static GroupRow From(AppGroup g) => new() { Model = g };
     }
 
@@ -352,8 +358,8 @@ public partial class MainWindow : Window
         public required ProcessSample Model { get; init; }
         public int Pid => Model.Pid;
         public string Name => Model.Name;
-        public string CpuDisplay => Calculations.Percent(Model.CpuPercent);
-        public string MemoryDisplay => Calculations.Bytes(Model.WorkingSetBytes);
+        public string CpuDisplay => Model.CpuAvailable ? Calculations.Percent(Model.CpuPercent) : "N/A";
+        public string MemoryDisplay => Model.MemoryAvailable ? Calculations.Bytes(Model.WorkingSetBytes) : "N/A";
         public static ProcessRow From(ProcessSample p) => new() { Model = p };
     }
 }
