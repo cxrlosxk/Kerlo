@@ -35,6 +35,8 @@ Assert(second.DiskBytesPerSecond is null or >= 0,
     "Optional disk rate is unavailable or nonnegative");
 Assert(second.Gpu3DPercent is null or >= 0 and <= 100,
     "Optional GPU 3D engine counter is unavailable or bounded");
+Assert(!string.IsNullOrWhiteSpace(monitor.GpuCounterStatus),
+    "Windows GPU Engine discovery exposes diagnostic status whether available or not");
 var groups = ProcessGrouping.Group(second.Processes);
 Assert(groups.Count >= 1, "Live process groups are generated");
 var registry = StartupReader.Read();
