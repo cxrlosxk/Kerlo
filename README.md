@@ -6,7 +6,7 @@ Kerlo is a Windows desktop Activity Monitor, built to be calm, fast, and useful.
 
 ## Building
 
-Requires Windows 10/11, the .NET 8 SDK, and Visual Studio 2022 with the desktop .NET workload (or the SDK command line).
+Requires Windows 10/11, the .NET 10 SDK, and Visual Studio 2022 with the desktop .NET workload (or the SDK command line).
 
 ```powershell
 dotnet run --project src/Kerlo/Kerlo.csproj
