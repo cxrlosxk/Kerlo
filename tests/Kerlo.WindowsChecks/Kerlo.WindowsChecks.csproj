@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Kerlo.Core/Kerlo.Core.csproj" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.0" />
     <Compile Include="../../src/Kerlo/Services/WindowsSampler.cs" Link="WindowsSampler.cs" />
     <Compile Include="../../src/Kerlo/Services/StartupReader.cs" Link="StartupReader.cs" />
   </ItemGroup>
