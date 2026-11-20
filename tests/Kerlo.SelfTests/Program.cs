@@ -42,6 +42,9 @@ Check(Sample(10, 2, 0).MemoryPercent == 0, "zero memory guard");
 Check(Insights.Evaluate(Sample(95, 90, 100, null), groups).Any(i => i.Title == "High CPU demand"), "high CPU insight");
 Check(Insights.Evaluate(Sample(10, 90, 100), groups).Any(i => i.Title == "Memory pressure"), "memory pressure insight");
 Check(Insights.Evaluate(Sample(10, 10, 100, null), groups).Any(i => i.Title == "GPU telemetry unavailable"), "unavailable GPU disclosure");
+Check(!Insights.Evaluate(Sample(10, 10, 100, null), groups, gpuWarmingUp: true)
+    .Any(i => i.Title == "GPU telemetry unavailable"), "GPU warmup does not create false unavailability alert");
+
 var history = new SampleHistory(2);
 history.Add(Sample(10, 10, 100));
 history.Add(Sample(20, 20, 100));
