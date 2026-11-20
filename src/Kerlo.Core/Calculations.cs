@@ -56,6 +56,7 @@ public static class ProcessGrouping
         ["searchhost"] = ("Windows Search", "Windows search experience and indexing support."),
         ["msmpeng"] = ("Microsoft Defender", "Built-in antivirus engine and background protection."),
         ["obs64"] = ("OBS Studio", "Recording and streaming application."),
+        ["Marvel-Win64-Shipping"] = ("Marvel Rivals", "Marvel Rivals game process. Closing it will end the game session."),
         ["spotify"] = ("Spotify", "Music playback application."),
         ["applemusic"] = ("Apple Music", "Music playback application.")
     };
