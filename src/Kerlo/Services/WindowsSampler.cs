@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.PerformanceCounter;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using Kerlo.Core;
