@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:graphs="clr-namespace:Kerlo.Controls"
         Title="Kerlo — Activity Monitor" Height="840" Width="1350" MinHeight="680" MinWidth="1050"
-        WindowStartupLocation="CenterScreen" Loaded="Window_Loaded" Closing="Window_Closing">
-  <Grid>
+        WindowStartupLocation="CenterScreen" Loaded="Window_Loaded" Closing="Window_Closing"
+        Background="{StaticResource BaseBrush}" Foreground="{StaticResource TextBrush}">
+  <Grid Background="{StaticResource BaseBrush}">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="228"/>
       <ColumnDefinition Width="*"/>
@@ -47,21 +48,21 @@
       </DockPanel>
     </Border>
 
-    <Grid Grid.Column="1">
+    <Grid Grid.Column="1" Background="{StaticResource PageBrush}">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="*"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
-      <Border Grid.Row="0" BorderBrush="#263441" BorderThickness="0,0,0,1" Padding="35,25,35,24">
+      <Border Grid.Row="0" Background="{StaticResource HeaderBrush}" BorderBrush="#263441" BorderThickness="0,0,0,1" Padding="35,25,35,24">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
           </Grid.ColumnDefinitions>
           <StackPanel>
-            <TextBlock Text="SYSTEM OVERVIEW" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="SemiBold"/>
+            <TextBlock x:Name="PageSectionText" Text="SYSTEM OVERVIEW" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="SemiBold"/>
             <TextBlock x:Name="PageTitle" Text="A clearer picture of your PC." FontSize="26" FontWeight="SemiBold" Margin="0,6,0,0"/>
             <TextBlock x:Name="PageSubtitle" Text="Live measurements from your Windows system." Style="{StaticResource MutedText}" Margin="0,5,0,0"/>
           </StackPanel>
@@ -78,8 +79,8 @@
         </Grid>
       </Border>
 
-      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="34,26,34,30">
-        <Grid>
+      <ScrollViewer x:Name="ContentScrollViewer" Grid.Row="1" Background="{StaticResource PageBrush}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="34,26,34,30">
+        <Grid Background="{StaticResource PageBrush}">
           <!-- OVERVIEW -->
           <StackPanel x:Name="DashboardPage">
             <UniformGrid Columns="4">
@@ -151,9 +152,9 @@
               </Grid.ColumnDefinitions>
               <Border Grid.Column="0" Style="{StaticResource PanelCard}" Margin="0,0,12,0">
                 <StackPanel>
-                  <DockPanel Margin="0,0,0,15">
+                  <DockPanel Margin="0,0,0,15" LastChildFill="False">
                     <TextBlock Text="Largest application groups" FontSize="16" FontWeight="SemiBold"/>
-                    <Button Content="View all  →" Style="{StaticResource OutlineButton}" DockPanel.Dock="Right" Click="Processes_Click"
+                    <Button Content="View all  →" Style="{StaticResource OutlineButton}" DockPanel.Dock="Right" HorizontalAlignment="Right" Click="Processes_Click"
                             Padding="10,6"/>
                   </DockPanel>
                   <DataGrid x:Name="DashboardGroups" Height="277" AutoGenerateColumns="False" CanUserSortColumns="True">
@@ -190,14 +191,17 @@
           <StackPanel x:Name="ProcessesPage" Visibility="Collapsed">
             <Border Style="{StaticResource PanelCard}">
               <StackPanel>
-                <DockPanel Margin="0,0,0,15">
+                <DockPanel Margin="0,0,0,15" LastChildFill="False">
                   <StackPanel>
                     <TextBlock Text="Understand what's running" FontSize="17" FontWeight="SemiBold"/>
                     <TextBlock Text="Grouped applications are easier to read than a list of identical helper processes."
                                Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap"/>
                   </StackPanel>
-                  <TextBox x:Name="SearchBox" DockPanel.Dock="Right" Width="230" VerticalAlignment="Center"
-                           TextChanged="SearchBox_TextChanged" ToolTip="Filter by app name or process name"/>
+                  <StackPanel DockPanel.Dock="Right" Width="230" VerticalAlignment="Center">
+                    <TextBlock Text="SEARCH APPLICATIONS" Foreground="{StaticResource MutedBrush}" FontSize="10" Margin="0,0,0,4"/>
+                    <TextBox x:Name="SearchBox" AutomationProperties.Name="Search processes"
+                             TextChanged="SearchBox_TextChanged" ToolTip="Filter by app name or process name"/>
+                  </StackPanel>
                 </DockPanel>
                 <DataGrid x:Name="GroupsGrid" Height="315" AutoGenerateColumns="False" CanUserSortColumns="True"
                           SelectionChanged="GroupsGrid_SelectionChanged">
@@ -326,7 +330,7 @@
         </Grid>
       </ScrollViewer>
 
-      <Border Grid.Row="2" BorderBrush="#2C3A46" BorderThickness="0,1,0,0" Padding="34,11">
+      <Border Grid.Row="2" Background="{StaticResource HeaderBrush}" BorderBrush="#2C3A46" BorderThickness="0,1,0,0" Padding="34,11">
         <DockPanel>
           <TextBlock Text="KERLO  /  LOCALLY MEASURED" Foreground="#788F9C" FontSize="10" FontWeight="SemiBold"/>
           <TextBlock x:Name="StatusText" Text="Preparing live system metrics…" Foreground="#9DAFB8"
