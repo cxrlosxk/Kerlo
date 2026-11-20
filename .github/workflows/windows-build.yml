@@ -23,6 +23,8 @@ jobs:
         run: dotnet build src/Kerlo/Kerlo.csproj --configuration Release --no-restore -warnaserror
       - name: Run core regression checks
         run: dotnet run --project tests/Kerlo.SelfTests/Kerlo.SelfTests.csproj --configuration Release
+      - name: Exercise real Windows telemetry APIs
+        run: dotnet run --project tests/Kerlo.WindowsChecks/Kerlo.WindowsChecks.csproj --configuration Release
       - name: Publish portable Windows x64 build
         shell: pwsh
         run: |
