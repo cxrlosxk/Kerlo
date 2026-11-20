@@ -21,3 +21,16 @@
 - Security review of process actions, library license notices, unsigned build warnings, code-signing and update process.
 
 These manual tests cannot be certified by GitHub's build-only CI or by a Linux coding environment. Do not call the app production-ready until completed.
+
+## Beta exit / next-build regression focus (Nov 20, 2026)
+
+The latest automated CI includes **24** core checks and GPU counter rediscovery. The latest direct PC comparison measured **399** Kerlo processes, near Task Manager's **~393**, but this is a snapshot, not exhaustive coverage certification.
+
+### Required before visual design handoff sign-off
+- Leave Overview open for at least **3 minutes** with active GPU workload and confirm no scheduled 30-second N/A flicker; hover the GPU metric for diagnostic status and note unsupported engines honestly.
+- Leave the Processes table scrolled halfway down for at least **2 minutes** across refresh ticks; verify scroll, selected group, selected PID and user sorting survive. Repeat with filtering and program exits.
+- Compare CPU, physical memory and process counts at several timestamps with Task Manager; explain differing private vs shared working-set measurement definitions.
+- Measure Kerlo idle working set and average CPU over at least 15 minutes; current 8-second Windows smoke produced around 167 MB, above preliminary target. Record actual data and changes.
+
+### Required for public distribution gate
+The longer manual matrix in this file remains outstanding. A hosted Windows runner that launches the application without an interactive review is not a substitute for visual usability, compatibility, accessibility or crash-free soak testing.

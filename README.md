@@ -4,6 +4,16 @@
 
 Kerlo is a Windows desktop Activity Monitor, built to be calm, fast, and useful. Its free core contains real process monitoring, live CPU and memory charts, app grouping, network and disk readings where supported, session history, startup inspection, and safe process actions.
 
+## Development status
+
+**0.1.4-beta.1 — technical stabilization checkpoint.** Kerlo is an unsigned Windows **tester preview**, not a publicly signed, fully validated release. We have corrected major process undercounting on the user's PC and improved GPU counter refresh behavior; some usability and hardware checks still need real-device verification.
+
+- [What we built and actually verified](BETA_CLOSEOUT.md)
+- [Prioritized next phase and public beta gates](NEXT_PHASE.md)
+- [Release history](CHANGELOG.md)
+- [Design and QA brief](DESIGN_HANDOFF.md)
+- [Windows verification plan](TEST_PLAN.md)
+
 ## Building
 
 Requires Windows 10/11, the .NET 10 SDK, and Visual Studio 2022 with the desktop .NET workload (or the SDK command line).

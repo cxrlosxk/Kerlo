@@ -31,3 +31,11 @@ Review existing files and current CI logs before refactoring. Preserve the dark 
 - Consistent typography, 8/12/16-point spacing rhythm, and polished loading/unavailable states.
 - Grouped process row disclosure and actionable, concise explanations.
 - Screenshot capture on an actual Windows machine, plus a comparison of app CPU/RAM overhead against the pre-design baseline.
+
+## Stabilization checkpoint to preserve
+
+Before design changes, read [BETA_CLOSEOUT.md](BETA_CLOSEOUT.md), [NEXT_PHASE.md](NEXT_PHASE.md), [CHANGELOG.md](CHANGELOG.md) and existing issue/CI history. The Nov 20, 2026 beta stabilization fixes are non-negotiable: do not reintroduce the ~50% process-count undercount, reset process tables on each timer tick, treat working set as Task Manager's private memory column, or force GPU N/A every 30 seconds. Check the current beta version and update labels consistently.
+
+Ask Claude Code to first inspect verified installed skills/plugins before editing; choose the smallest relevant set and **do not assume** any specific tool is installed. WPF desktop screenshot tests, Windows telemetry correctness and CPU/memory benchmarks outrank purely browser-focused visuals. Do not start payments, Pro entitlements or a login system.
+
+**Handoff outcome:** visually polished, functionally equivalent or better, accessible native Windows preview with real screenshots and performance measurements, plus a change log. Do not claim public release readiness without separate QA approval.

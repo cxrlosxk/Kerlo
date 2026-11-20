@@ -30,8 +30,7 @@ jobs:
         run: |
           dotnet publish src/Kerlo/Kerlo.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/Kerlo-win-x64
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Check Windows GUI startup (headless runner; informational)
-        continue-on-error: true
+      - name: Check Windows GUI startup (headless runner; required check)
         shell: pwsh
         run: |
           $exe = Join-Path (Get-Location) "artifacts/Kerlo-win-x64/Kerlo.exe"
