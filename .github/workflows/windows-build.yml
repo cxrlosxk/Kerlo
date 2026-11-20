@@ -1,0 +1,35 @@
+name: Windows build and verification
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore src/Kerlo/Kerlo.csproj
+      - name: Compile release
+        run: dotnet build src/Kerlo/Kerlo.csproj --configuration Release --no-restore -warnaserror
+      - name: Run core regression checks
+        run: dotnet run --project tests/Kerlo.SelfTests/Kerlo.SelfTests.csproj --configuration Release
+      - name: Publish portable Windows x64 build
+        shell: pwsh
+        run: |
+          dotnet publish src/Kerlo/Kerlo.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/Kerlo-win-x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Kerlo-Windows-x64-unsigned
+          path: artifacts/Kerlo-win-x64/
+          if-no-files-found: error
