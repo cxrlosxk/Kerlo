@@ -205,7 +205,7 @@ public sealed class WindowsSampler : IDisposable
                                 _ = counter.NextValue();
                                 _gpuCounters.Add(counter);
                             }
-                            catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or UnauthorizedAccessException)
+                            catch (Exception ex) when (ex is not OutOfMemoryException)
                             {
                                 // Drivers can remove a process-specific GPU instance at any time.
                             }
@@ -223,7 +223,7 @@ public sealed class WindowsSampler : IDisposable
                     }
                 }
             }
-            catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 _gpuCounterStatus = "Windows GPU Engine counters could not be enumerated (" + ex.GetType().Name + "). Verify performance counter availability and the graphics driver.";
             }
@@ -237,7 +237,7 @@ public sealed class WindowsSampler : IDisposable
         foreach (var counter in _gpuCounters)
         {
             try { total += Math.Max(0, counter.NextValue()); }
-            catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 _gpuCounterStatus = "A GPU 3D counter disappeared while sampling. Kerlo will rediscover counters on the next update.";
                 _lastGpuDiscover = default;
