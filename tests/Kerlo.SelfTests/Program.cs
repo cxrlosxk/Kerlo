@@ -17,6 +17,7 @@ Check(Calculations.Bytes(1024) == "1 KB", "binary unit formatting");
 Check(Calculations.Bytes(1048576, true) == "1 MB/s", "throughput formatting");
 Check(ProcessGrouping.Normalize("chrome.exe") == "Google Chrome", "browser normalization");
 Check(ProcessGrouping.Normalize("steamwebhelper") == "Steam", "app helper grouping");
+Check(ProcessGrouping.Normalize("Marvel-Win64-Shipping") == "Marvel Rivals", "Marvel Rivals game naming");
 Check(ProcessGrouping.Normalize("unrecognized") == "unrecognized", "unknown process retained");
 
 var list = new[] { new ProcessSample(1, "chrome", 1_000_000, 8),
