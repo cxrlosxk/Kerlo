@@ -74,7 +74,7 @@ public partial class MainWindow : Window
             PopulateDashboard(sample);
             PopulateHistory(sample);
             PopulateGroups();
-            InsightList.ItemsSource = Insights.Evaluate(sample, _groups);
+            InsightList.ItemsSource = Insights.Evaluate(sample, _groups, _sampler.GpuWarmingUp);
             UpdatedText.Text = "Updated " + sample.Timestamp.ToLocalTime().ToString("h:mm:ss tt");
             StatusText.Text = $"{sample.Processes.Count} visible processes  ·  {sample.Timestamp.ToLocalTime():h:mm:ss tt}";
             if (_tray != null)
@@ -95,11 +95,14 @@ public partial class MainWindow : Window
         MemoryMetric.Text = Calculations.Percent(s.MemoryPercent);
         MemoryMeter.Value = s.MemoryPercent;
         MemoryDetails.Text = $"{Calculations.Bytes(s.UsedMemoryBytes)} / {Calculations.Bytes(s.TotalMemoryBytes)}";
-        GpuMetric.Text = s.Gpu3DPercent is { } gpu ? Calculations.Percent(gpu) : "N/A";
+        GpuMetric.Text = s.Gpu3DPercent is { } gpu
+            ? Calculations.Percent(gpu)
+            : _sampler.GpuWarmingUp ? "…" : "N/A";
         GpuMeter.Value = s.Gpu3DPercent ?? 0;
         GpuMetric.ToolTip = _sampler.GpuCounterStatus;
-        GpuStatusText.Text = s.Gpu3DPercent.HasValue
-            ? "Windows 3D engine counters"
+        GpuStatusText.Text = _sampler.GpuWarmingUp
+            ? "Initializing 3D counters…"
+            : s.Gpu3DPercent.HasValue ? "Windows 3D engine counters"
             : "Unavailable · hover for details";
         GpuStatusText.ToolTip = _sampler.GpuCounterStatus;
         DiskMetric.Text = s.DiskBytesPerSecond is { } disk ? Calculations.Bytes(disk, true) : "N/A";

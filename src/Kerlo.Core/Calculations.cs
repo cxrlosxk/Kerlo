@@ -93,7 +93,7 @@ public static class ProcessGrouping
 
 public static class Insights
 {
-    public static IReadOnlyList<Insight> Evaluate(MachineSample sample, IReadOnlyList<AppGroup> groups)
+    public static IReadOnlyList<Insight> Evaluate(MachineSample sample, IReadOnlyList<AppGroup> groups, bool gpuWarmingUp = false)
     {
         List<Insight> insights = [];
         if (sample.MemoryPercent >= 85)
@@ -103,8 +103,8 @@ public static class Insights
         var busiest = groups.OrderByDescending(g => g.CpuPercent).FirstOrDefault();
         if (busiest is { CpuPercent: >= 25 })
             insights.Add(new("Notable CPU activity", $"{busiest.Name} currently accounts for about {Calculations.Percent(busiest.CpuPercent)} of total CPU capacity.", InsightSeverity.Information));
-        if (sample.Gpu3DPercent is null)
-            insights.Add(new("GPU telemetry unavailable", "The GPU 3D performance counter is not available on this machine. Kerlo will not invent a reading.", InsightSeverity.Information));
+        if (sample.Gpu3DPercent is null && !gpuWarmingUp)
+            insights.Add(new("GPU telemetry unavailable", "No GPU 3D reading is available in this sample. Hover over the GPU card for a Windows counter diagnostic.", InsightSeverity.Information));
         if (insights.Count == 0)
             insights.Add(new("System looks steady", "No high CPU or memory pressure was observed in this sample. This is not a full hardware health assessment.", InsightSeverity.Information));
         return insights;

@@ -37,6 +37,18 @@ Assert(second.Gpu3DPercent is null or >= 0 and <= 100,
     "Optional GPU 3D engine counter is unavailable or bounded");
 Assert(!string.IsNullOrWhiteSpace(monitor.GpuCounterStatus),
     "Windows GPU Engine discovery exposes diagnostic status whether available or not");
+if (second.Gpu3DPercent.HasValue)
+{
+    // Exercise the refresh path without waiting for the 30-second discovery interval.
+    // When a previous set was valid, replacing it with another complete set must
+    // not cause a forced N/A just because the replacement needs a second baseline.
+    monitor.RequestGpuRediscoveryForTesting();
+    var duringRefresh = monitor.Sample();
+    Assert(duringRefresh.Gpu3DPercent.HasValue ||
+           !monitor.GpuCounterStatus.StartsWith("Reading ", StringComparison.Ordinal),
+        "GPU refresh does not fabricate a dropout while old counters still measure");
+}
+
 var groups = ProcessGrouping.Group(second.Processes);
 Assert(groups.Count >= 1, "Live process groups are generated");
 var registry = StartupReader.Read();
