@@ -22,6 +22,11 @@ public sealed class WindowsSampler : IDisposable
     private bool _disposed;
     private string _gpuCounterStatus = "Checking Windows GPU Engine performance counters...";
     public string GpuCounterStatus => _gpuCounterStatus;
+    public bool GpuWarmingUp { get; private set; }
+
+    // The Windows integration harness can exercise the 30-second GPU refresh path
+    // immediately, without making every CI run wait 30 seconds.
+    internal void RequestGpuRediscoveryForTesting() => _lastGpuDiscover = default;
 
     public WindowsSampler()
     {
@@ -168,32 +173,36 @@ public sealed class WindowsSampler : IDisposable
 
     private double? ReadGpu3D(DateTimeOffset now)
     {
-        bool discovered = false;
-        if (_lastGpuDiscover == default || (now - _lastGpuDiscover).TotalSeconds >= 30)
+        var refresh = _lastGpuDiscover == default ||
+            (now - _lastGpuDiscover).TotalSeconds >= 30;
+        List<PerformanceCounter>? nextCounters = null;
+
+        if (refresh)
         {
-            discovered = true;
             _lastGpuDiscover = now;
-            foreach (var c in _gpuCounters) c.Dispose();
-            _gpuCounters.Clear();
+            var candidates = new List<PerformanceCounter>();
             try
             {
                 if (!PerformanceCounterCategory.Exists("GPU Engine"))
                 {
-                    _gpuCounterStatus = "Windows does not expose a GPU Engine counter category. This may depend on the display driver or Windows configuration.";
+                    _gpuCounterStatus =
+                        "Windows does not expose a GPU Engine counter category. Check the display driver and Windows performance-counter configuration.";
                 }
                 else
                 {
                     var category = new PerformanceCounterCategory("GPU Engine");
                     var instances = category.GetInstanceNames();
-                    var names = instances.Where(n => n.Contains("engtype_3D", StringComparison.OrdinalIgnoreCase)).ToArray();
+                    var names = instances.Where(n =>
+                        n.Contains("engtype_3D", StringComparison.OrdinalIgnoreCase)).ToArray();
                     const int safetyCap = 256;
+
                     if (names.Length == 0)
                     {
-                        _gpuCounterStatus = $"Windows exposed {instances.Length} GPU engine instance(s), but no active 3D engine instances. Task Manager's total GPU figure may represent other engine types.";
+                        _gpuCounterStatus = $"Windows exposed {instances.Length} GPU engine instance(s), but no active 3D engine instances. Task Manager's overall GPU percentage can include other engine types.";
                     }
                     else if (names.Length > safetyCap)
                     {
-                        _gpuCounterStatus = $"Found {names.Length} GPU 3D instances, above Kerlo's {safetyCap}-counter overhead limit. No partial reading will be reported.";
+                        _gpuCounterStatus = $"Found {names.Length} GPU 3D instances, above Kerlo's {safetyCap}-counter sampling limit. Reporting a partial figure would be misleading.";
                     }
                     else
                     {
@@ -201,50 +210,87 @@ public sealed class WindowsSampler : IDisposable
                         {
                             try
                             {
-                                var counter = new PerformanceCounter("GPU Engine", "Utilization Percentage", name, true);
-                                _ = counter.NextValue();
-                                _gpuCounters.Add(counter);
+                                var counter = new PerformanceCounter(
+                                    "GPU Engine", "Utilization Percentage", name, true);
+                                _ = counter.NextValue(); // Warm up before the next tick.
+                                candidates.Add(counter);
                             }
                             catch (Exception ex) when (ex is not OutOfMemoryException)
                             {
-                                // Drivers can remove a process-specific GPU instance at any time.
+                                // Instances can disappear between enumeration and opening.
                             }
                         }
-                        if (_gpuCounters.Count == names.Length)
+
+                        if (candidates.Count == names.Length)
                         {
-                            _gpuCounterStatus = $"Reading {names.Length} Windows GPU 3D engine instance(s). This is not the same as Task Manager's total GPU usage, which can include other engines.";
+                            nextCounters = candidates;
+                            _gpuCounterStatus =
+                                $"Reading {names.Length} Windows GPU 3D engine instance(s). This is not Task Manager's total GPU utilization.";
                         }
                         else
                         {
-                            _gpuCounterStatus = $"Found {names.Length} GPU 3D instance(s), but could initialize only {_gpuCounters.Count}. To avoid a misleading partial percentage, the reading is unavailable.";
-                            foreach (var c in _gpuCounters) c.Dispose();
-                            _gpuCounters.Clear();
+                            _gpuCounterStatus =
+                                $"Found {names.Length} GPU 3D instance(s), but opened {candidates.Count}. The partial sample has been discarded.";
                         }
                     }
                 }
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                _gpuCounterStatus = "Windows GPU Engine counters could not be enumerated (" + ex.GetType().Name + "). Verify performance counter availability and the graphics driver.";
+                _gpuCounterStatus =
+                    "GPU Engine enumeration failed (" + ex.GetType().Name +
+                    "). Verify graphics-driver and performance-counter availability.";
+            }
+            finally
+            {
+                // Candidates become owned by _gpuCounters only on a complete read.
+                if (nextCounters is null)
+                    foreach (var counter in candidates) counter.Dispose();
             }
         }
-        if (_gpuCounters.Count == 0) return null;
-        // NextValue requires a preceding baseline, so a freshly discovered counter
-        // must not be displayed as a measured 0% until the next timer sample.
-        if (discovered) return null;
 
-        double total = 0;
-        foreach (var counter in _gpuCounters)
+        // Read the OLD, already-primed counters before swapping to the newly
+        // discovered set. This avoids a fabricated N/A every 30 seconds.
+        double? previousReading = null;
+        if (_gpuCounters.Count > 0)
         {
-            try { total += Math.Max(0, counter.NextValue()); }
+            try
+            {
+                double total = 0;
+                foreach (var counter in _gpuCounters)
+                    total += Math.Max(0, counter.NextValue());
+                previousReading = Math.Clamp(total, 0, 100);
+            }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                _gpuCounterStatus = "A GPU 3D counter disappeared while sampling. Kerlo will rediscover counters on the next update.";
-                _lastGpuDiscover = default;
-                return null;
+                _gpuCounterStatus =
+                    "A previously active GPU 3D instance disappeared while sampling (" +
+                    ex.GetType().Name + "). Counters will be rediscovered.";
+                if (!refresh)
+                    _lastGpuDiscover = default;
             }
         }
-        return Math.Clamp(total, 0, 100);
+
+        if (refresh)
+        {
+            // Replace only after reading the old snapshot. Never sample a freshly
+            // primed counter as if it had a full sampling interval.
+            foreach (var counter in _gpuCounters) counter.Dispose();
+            _gpuCounters.Clear();
+            if (nextCounters is not null)
+                _gpuCounters.AddRange(nextCounters);
+
+            GpuWarmingUp = nextCounters is not null && previousReading is null;
+            if (GpuWarmingUp)
+                _gpuCounterStatus = "Initializing Windows GPU 3D engine counters. A measurement will be available after the next sampling interval.";
+
+            // If discovery failed, old counters may omit newly created GPU work.
+            // Do not publish an incomplete previous set as a current measurement.
+            return nextCounters is null ? null : previousReading;
+        }
+
+        GpuWarmingUp = false;
+        return previousReading;
     }
 
     public void Dispose()
