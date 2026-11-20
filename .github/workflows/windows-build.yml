@@ -30,6 +30,22 @@ jobs:
         run: |
           dotnet publish src/Kerlo/Kerlo.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/Kerlo-win-x64
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Check Windows GUI startup (headless runner; informational)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $exe = Join-Path (Get-Location) "artifacts/Kerlo-win-x64/Kerlo.exe"
+          $app = Start-Process -FilePath $exe -PassThru
+          try {
+            Start-Sleep -Seconds 8
+            $app.Refresh()
+            if ($app.HasExited) {
+              throw "Kerlo exited during startup (code $($app.ExitCode)); requires investigation on an interactive desktop"
+            }
+            Write-Host "PASS: Kerlo remained running after 8 seconds on Windows. Working set: $([math]::Round($app.WorkingSet64 / 1MB)) MB"
+          } finally {
+            if (-not $app.HasExited) { Stop-Process -Id $app.Id -Force }
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: Kerlo-Windows-x64-unsigned
