@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -20,6 +21,8 @@ public partial class MainWindow : Window
     private KerloSettings _settings = SettingsStore.Load();
     private MachineSample? _lastSample;
     private IReadOnlyList<AppGroup> _groups = [];
+    private readonly ObservableCollection<GroupRow> _groupRows = new();
+    private readonly ObservableCollection<ProcessRow> _detailRows = new();
     private Forms.NotifyIcon? _tray;
     private bool _sampling;
     private bool _initialized;
@@ -27,6 +30,10 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        // Bind each grid exactly once; replacing ItemsSource every 2 seconds
+        // previously reset scrolling, sorting and process selection.
+        GroupsGrid.ItemsSource = _groupRows;
+        ProcessDetailsGrid.ItemsSource = _detailRows;
         _timer.Tick += async (_, _) => await RefreshAsync();
         Topmost = _settings.AlwaysOnTop;
         SelectNavigation("Overview");
@@ -90,6 +97,11 @@ public partial class MainWindow : Window
         MemoryDetails.Text = $"{Calculations.Bytes(s.UsedMemoryBytes)} / {Calculations.Bytes(s.TotalMemoryBytes)}";
         GpuMetric.Text = s.Gpu3DPercent is { } gpu ? Calculations.Percent(gpu) : "N/A";
         GpuMeter.Value = s.Gpu3DPercent ?? 0;
+        GpuMetric.ToolTip = _sampler.GpuCounterStatus;
+        GpuStatusText.Text = s.Gpu3DPercent.HasValue
+            ? "Windows 3D engine counters"
+            : "Unavailable · hover for details";
+        GpuStatusText.ToolTip = _sampler.GpuCounterStatus;
         DiskMetric.Text = s.DiskBytesPerSecond is { } disk ? Calculations.Bytes(disk, true) : "N/A";
         DownloadMetric.Text = Calculations.Bytes(s.DownloadBytesPerSecond, true);
         UploadMetric.Text = Calculations.Bytes(s.UploadBytesPerSecond, true);
@@ -117,30 +129,73 @@ public partial class MainWindow : Window
     {
         if (_lastSample is null) return;
         var query = SearchBox.Text?.Trim() ?? "";
-        var previousName = (GroupsGrid.SelectedItem as GroupRow)?.Name;
         var filtered = _groups.Where(g => query.Length == 0 ||
             g.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
             g.Processes.Any(p => p.Name.Contains(query, StringComparison.OrdinalIgnoreCase))).ToArray();
-        var rows = filtered.Select(GroupRow.From).ToArray();
-        GroupsGrid.ItemsSource = rows;
-        if (previousName is not null)
-            GroupsGrid.SelectedItem = rows.FirstOrDefault(g => g.Name == previousName);
-        else if (rows.Length > 0 && ProcessesPage.Visibility == Visibility.Visible)
-            GroupsGrid.SelectedIndex = 0;
+
+        // Keep GroupRow object identities stable so the DataGrid can maintain
+        // scroll position, user-selected sorts and keyboard/row selection.
+        var incoming = filtered.Select(GroupRow.From).ToArray();
+        ReconcileRows(_groupRows, incoming,
+            row => row.Name, (oldRow, newRow) => oldRow.Update(newRow.Model));
+        if (GroupsGrid.SelectedItem is not GroupRow && _groupRows.Count > 0 &&
+            ProcessesPage.Visibility == Visibility.Visible)
+            GroupsGrid.SelectedItem = _groupRows[0];
+        RefreshProcessDetails();
     }
 
-    private void GroupsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void GroupsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        RefreshProcessDetails();
+
+    private void RefreshProcessDetails()
     {
         if (GroupsGrid.SelectedItem is not GroupRow row)
         {
             GroupNameText.Text = "Select an application";
             GroupDescriptionText.Text = "Individual processes will appear here.";
-            ProcessDetailsGrid.ItemsSource = null;
+            _detailRows.Clear();
             return;
         }
         GroupNameText.Text = row.Name + $" · {row.ProcessCount} process(es)";
         GroupDescriptionText.Text = row.Model.Description;
-        ProcessDetailsGrid.ItemsSource = row.Model.Processes.Select(ProcessRow.From).ToArray();
+        var incoming = row.Model.Processes.Select(ProcessRow.From).ToArray();
+        ReconcileRows(_detailRows, incoming,
+            process => process.Pid, (oldRow, newRow) => oldRow.Update(newRow.Model));
+    }
+
+    private static void ReconcileRows<T, TKey>(
+        ObservableCollection<T> existing, IReadOnlyList<T> incoming,
+        Func<T, TKey> key, Action<T, T> update) where TKey : notnull
+    {
+        // In-place updates avoid the expensive visual reset caused by assigning
+        // ItemsSource on every timer tick. Typical group counts are modest.
+        for (int i = 0; i < incoming.Count; i++)
+        {
+            var wanted = key(incoming[i]);
+            if (i < existing.Count && EqualityComparer<TKey>.Default.Equals(key(existing[i]), wanted))
+            {
+                update(existing[i], incoming[i]);
+                continue;
+            }
+            int found = -1;
+            for (int j = i + 1; j < existing.Count; j++)
+            {
+                if (EqualityComparer<TKey>.Default.Equals(key(existing[j]), wanted))
+                {
+                    found = j;
+                    break;
+                }
+            }
+            if (found >= 0)
+            {
+                existing.Move(found, i);
+                update(existing[i], incoming[i]);
+            }
+            else
+                existing.Insert(i, incoming[i]);
+        }
+        while (existing.Count > incoming.Count)
+            existing.RemoveAt(existing.Count - 1);
     }
 
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -337,9 +392,11 @@ public partial class MainWindow : Window
         Activate();
     }
 
-    public sealed class GroupRow
+    public sealed class GroupRow : INotifyPropertyChanged
     {
-        public required AppGroup Model { get; init; }
+        public AppGroup Model { get; private set; }
+        private GroupRow(AppGroup model) => Model = model;
+        public event PropertyChangedEventHandler? PropertyChanged;
         public string Name => Model.Name;
         public int ProcessCount => Model.ProcessCount;
         public string CpuDisplay =>
@@ -350,16 +407,50 @@ public partial class MainWindow : Window
             Model.Processes.All(p => !p.MemoryAvailable) ? "N/A" :
             (Model.Processes.Any(p => !p.MemoryAvailable) ? "≥ " : "") +
             Calculations.Bytes(Model.WorkingSetBytes);
-        public static GroupRow From(AppGroup g) => new() { Model = g };
+        public static GroupRow From(AppGroup g) => new(g);
+
+        public void Update(AppGroup updated)
+        {
+            if (Name != updated.Name)
+                throw new InvalidOperationException("A group row may only be updated for the same application.");
+            var previousCount = ProcessCount;
+            var previousCpu = CpuDisplay;
+            var previousMemory = MemoryDisplay;
+            Model = updated;
+            if (previousCount != ProcessCount)
+                PropertyChanged?.Invoke(this, new(nameof(ProcessCount)));
+            if (previousCpu != CpuDisplay)
+                PropertyChanged?.Invoke(this, new(nameof(CpuDisplay)));
+            if (previousMemory != MemoryDisplay)
+                PropertyChanged?.Invoke(this, new(nameof(MemoryDisplay)));
+        }
     }
 
-    public sealed class ProcessRow
+    public sealed class ProcessRow : INotifyPropertyChanged
     {
-        public required ProcessSample Model { get; init; }
+        public ProcessSample Model { get; private set; }
+        private ProcessRow(ProcessSample model) => Model = model;
+        public event PropertyChangedEventHandler? PropertyChanged;
         public int Pid => Model.Pid;
         public string Name => Model.Name;
         public string CpuDisplay => Model.CpuAvailable ? Calculations.Percent(Model.CpuPercent) : "N/A";
         public string MemoryDisplay => Model.MemoryAvailable ? Calculations.Bytes(Model.WorkingSetBytes) : "N/A";
-        public static ProcessRow From(ProcessSample p) => new() { Model = p };
+        public static ProcessRow From(ProcessSample p) => new(p);
+
+        public void Update(ProcessSample updated)
+        {
+            if (Pid != updated.Pid)
+                throw new InvalidOperationException("A process row may only be updated for the same PID.");
+            var previousName = Name;
+            var previousCpu = CpuDisplay;
+            var previousMemory = MemoryDisplay;
+            Model = updated;
+            if (previousName != Name)
+                PropertyChanged?.Invoke(this, new(nameof(Name)));
+            if (previousCpu != CpuDisplay)
+                PropertyChanged?.Invoke(this, new(nameof(CpuDisplay)));
+            if (previousMemory != MemoryDisplay)
+                PropertyChanged?.Invoke(this, new(nameof(MemoryDisplay)));
+        }
     }
 }
