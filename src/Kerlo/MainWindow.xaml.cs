@@ -91,7 +91,6 @@ public partial class MainWindow : Window
         GpuMetric.Text = s.Gpu3DPercent is { } gpu ? Calculations.Percent(gpu) : "N/A";
         GpuMeter.Value = s.Gpu3DPercent ?? 0;
         DiskMetric.Text = s.DiskBytesPerSecond is { } disk ? Calculations.Bytes(disk, true) : "N/A";
-        DiskMeter.Value = 0; // Throughput cannot be normalized as a percentage of unknown disk capability.
         DownloadMetric.Text = Calculations.Bytes(s.DownloadBytesPerSecond, true);
         UploadMetric.Text = Calculations.Bytes(s.UploadBytesPerSecond, true);
     }
