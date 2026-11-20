@@ -171,7 +171,18 @@ public partial class MainWindow : Window
             "Preferences" => "Stay in control of sampling, privacy, and window behavior.",
             _ => "Live measurements from your Windows system."
         };
+        PageSectionText.Text = destination switch
+        {
+            "Processes" => "PROCESS INSPECTOR",
+            "Performance" => "PERFORMANCE HISTORY",
+            "Startup" => "WINDOWS STARTUP",
+            "Preferences" => "PREFERENCES",
+            _ => "SYSTEM OVERVIEW"
+        };
         SelectNavigation(destination);
+        // The same ScrollViewer hosts every page; switching pages must reset the old offset.
+        ContentScrollViewer.Dispatcher.BeginInvoke(
+            () => ContentScrollViewer.ScrollToTop(), DispatcherPriority.Loaded);
         if (destination == "Processes") PopulateGroups();
     }
 
