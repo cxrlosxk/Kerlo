@@ -1,0 +1,338 @@
+<Window x:Class="Kerlo.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:graphs="clr-namespace:Kerlo.Controls"
+        Title="Kerlo — Activity Monitor" Height="840" Width="1350" MinHeight="680" MinWidth="1050"
+        WindowStartupLocation="CenterScreen" Loaded="Window_Loaded" Closing="Window_Closing">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="228"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <!-- Navigation: deliberately quiet, discoverable, and consistent. -->
+    <Border Grid.Column="0" Background="{StaticResource SidebarBrush}" BorderBrush="#263440" BorderThickness="0,0,1,0">
+      <DockPanel Margin="18,27,18,20">
+        <StackPanel DockPanel.Dock="Top" Margin="8,0,8,44">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Border Background="{StaticResource AccentBrush}" Width="40" Height="40" CornerRadius="12">
+              <TextBlock Text="k" Foreground="#10221E" FontWeight="Bold" FontSize="29"
+                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-4,0,0"/>
+            </Border>
+            <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+              <TextBlock Text="kerlo" FontSize="24" FontWeight="SemiBold"/>
+              <TextBlock Text="ACTIVITY MONITOR" Style="{StaticResource MutedText}" FontSize="8" FontWeight="SemiBold"/>
+            </StackPanel>
+          </StackPanel>
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" Margin="6,0,6,0">
+          <Border Background="#202F38" Padding="12" CornerRadius="12">
+            <StackPanel>
+              <TextBlock Text="ON YOUR DEVICE" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="SemiBold"/>
+              <TextBlock Text="No account. No telemetry.&#10;Your data stays local." Style="{StaticResource MutedText}"
+                         Margin="0,8,0,0" TextWrapping="Wrap" LineHeight="18"/>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="KERLO 0.1  ·  FREE CORE" FontSize="10" Foreground="#6F8593" Margin="6,20,0,0"/>
+        </StackPanel>
+        <StackPanel>
+          <TextBlock Text="WORKSPACE" Foreground="#6B8292" FontSize="10" FontWeight="SemiBold" Margin="13,0,0,13"/>
+          <Button x:Name="DashboardNav" Content="▦    Overview" Style="{StaticResource NavigationButton}" Click="Dashboard_Click" Margin="0,0,0,5"/>
+          <Button x:Name="ProcessesNav" Content="☷    Processes" Style="{StaticResource NavigationButton}" Click="Processes_Click" Margin="0,0,0,5"/>
+          <Button x:Name="PerformanceNav" Content="⌁    Performance" Style="{StaticResource NavigationButton}" Click="Performance_Click" Margin="0,0,0,5"/>
+          <Button x:Name="StartupNav" Content="◷    Startup" Style="{StaticResource NavigationButton}" Click="Startup_Click" Margin="0,0,0,5"/>
+          <Separator Background="#30404B" Margin="8,18"/>
+          <Button x:Name="SettingsNav" Content="⚙    Preferences" Style="{StaticResource NavigationButton}" Click="Settings_Click"/>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <Grid Grid.Column="1">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <Border Grid.Row="0" BorderBrush="#263441" BorderThickness="0,0,0,1" Padding="35,25,35,24">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel>
+            <TextBlock Text="SYSTEM OVERVIEW" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="SemiBold"/>
+            <TextBlock x:Name="PageTitle" Text="A clearer picture of your PC." FontSize="26" FontWeight="SemiBold" Margin="0,6,0,0"/>
+            <TextBlock x:Name="PageSubtitle" Text="Live measurements from your Windows system." Style="{StaticResource MutedText}" Margin="0,5,0,0"/>
+          </StackPanel>
+          <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Border BorderBrush="#365148" BorderThickness="1" CornerRadius="10" Padding="12,8" Background="#19312C">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="LIVE MONITORING" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="SemiBold" Margin="9,0,0,0"/>
+              </StackPanel>
+            </Border>
+            <TextBlock x:Name="UpdatedText" Text="Connecting to Windows…" Style="{StaticResource MutedText}"
+                       HorizontalAlignment="Right" Margin="0,8,0,0"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="34,26,34,30">
+        <Grid>
+          <!-- OVERVIEW -->
+          <StackPanel x:Name="DashboardPage">
+            <UniformGrid Columns="4">
+              <Border Style="{StaticResource PanelCard}" Margin="0,0,12,0">
+                <StackPanel>
+                  <TextBlock Text="CPU LOAD" Style="{StaticResource MutedText}" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="CpuMetric" Text="—" FontSize="34" FontWeight="SemiBold" Margin="0,11,0,13"/>
+                  <ProgressBar x:Name="CpuMeter" Minimum="0" Maximum="100"/>
+                  <TextBlock Text="Total processor capacity" Style="{StaticResource MutedText}" Margin="0,12,0,0" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource PanelCard}" Margin="0,0,12,0">
+                <StackPanel>
+                  <TextBlock Text="MEMORY" Style="{StaticResource MutedText}" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="MemoryMetric" Text="—" FontSize="34" FontWeight="SemiBold" Margin="0,11,0,13"/>
+                  <ProgressBar x:Name="MemoryMeter" Minimum="0" Maximum="100"/>
+                  <TextBlock x:Name="MemoryDetails" Text="Physical memory used" Style="{StaticResource MutedText}" Margin="0,12,0,0" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource PanelCard}" Margin="0,0,12,0">
+                <StackPanel>
+                  <TextBlock Text="GPU 3D ENGINE" Style="{StaticResource MutedText}" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="GpuMetric" Text="—" FontSize="34" FontWeight="SemiBold" Margin="0,11,0,13"/>
+                  <ProgressBar x:Name="GpuMeter" Minimum="0" Maximum="100"/>
+                  <TextBlock Text="If supported by Windows" Style="{StaticResource MutedText}" Margin="0,12,0,0" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource PanelCard}">
+                <StackPanel>
+                  <TextBlock Text="DISK I/O" Style="{StaticResource MutedText}" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="DiskMetric" Text="—" FontSize="26" FontWeight="SemiBold" Margin="0,15,0,18"/>
+                  <TextBlock Text="Throughput, not utilization" FontSize="10" Foreground="#86A1A9"/>
+                  <TextBlock Text="Read + write throughput" Style="{StaticResource MutedText}" Margin="0,12,0,0" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+            </UniformGrid>
+
+            <Grid Margin="0,20,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.7*"/>
+                <ColumnDefinition Width="1*"/>
+              </Grid.ColumnDefinitions>
+              <Border Grid.Column="0" Style="{StaticResource PanelCard}" Margin="0,0,12,0">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,16">
+                    <TextBlock Text="Processor activity" FontWeight="SemiBold" FontSize="16"/>
+                    <TextBlock Text="Live session" Style="{StaticResource MutedText}" DockPanel.Dock="Right" HorizontalAlignment="Right"/>
+                  </DockPanel>
+                  <graphs:TrendGraph x:Name="OverviewCpuChart" Height="172"/>
+                  <TextBlock Text="Recent usage · time moves left to right" Style="{StaticResource MutedText}" Margin="0,13,0,0"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="1" Style="{StaticResource PanelCard}">
+                <StackPanel>
+                  <TextBlock Text="Network traffic" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,16"/>
+                  <TextBlock Text="DOWNLOAD" Style="{StaticResource MutedText}"/>
+                  <TextBlock x:Name="DownloadMetric" Text="—" FontSize="23" FontWeight="SemiBold" Margin="0,5,0,17"/>
+                  <TextBlock Text="UPLOAD" Style="{StaticResource MutedText}"/>
+                  <TextBlock x:Name="UploadMetric" Text="—" FontSize="23" FontWeight="SemiBold" Margin="0,5,0,0"/>
+                  <TextBlock Text="Measured across active network adapters" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,14,0,0"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <Grid Margin="0,20,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.7*"/>
+                <ColumnDefinition Width="1*"/>
+              </Grid.ColumnDefinitions>
+              <Border Grid.Column="0" Style="{StaticResource PanelCard}" Margin="0,0,12,0">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,15">
+                    <TextBlock Text="Largest application groups" FontSize="16" FontWeight="SemiBold"/>
+                    <Button Content="View all  →" Style="{StaticResource OutlineButton}" DockPanel.Dock="Right" Click="Processes_Click"
+                            Padding="10,6"/>
+                  </DockPanel>
+                  <DataGrid x:Name="DashboardGroups" Height="277" AutoGenerateColumns="False" CanUserSortColumns="True">
+                    <DataGrid.Columns>
+                      <DataGridTextColumn Header="APPLICATION" Binding="{Binding Name}" Width="*"/>
+                      <DataGridTextColumn Header="PROCESSES" Binding="{Binding ProcessCount}" Width="105"/>
+                      <DataGridTextColumn Header="MEMORY" Binding="{Binding MemoryDisplay}" Width="115"/>
+                    </DataGrid.Columns>
+                  </DataGrid>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="1" Style="{StaticResource PanelCard}">
+                <StackPanel>
+                  <TextBlock Text="What Kerlo noticed" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,14"/>
+                  <ItemsControl x:Name="InsightList">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="#24343E" CornerRadius="10" Padding="12" Margin="0,0,0,10">
+                          <StackPanel>
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding Explanation}" Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                                       LineHeight="17" Margin="0,6,0,0"/>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+            </Grid>
+          </StackPanel>
+
+          <!-- PROCESSES -->
+          <StackPanel x:Name="ProcessesPage" Visibility="Collapsed">
+            <Border Style="{StaticResource PanelCard}">
+              <StackPanel>
+                <DockPanel Margin="0,0,0,15">
+                  <StackPanel>
+                    <TextBlock Text="Understand what's running" FontSize="17" FontWeight="SemiBold"/>
+                    <TextBlock Text="Grouped applications are easier to read than a list of identical helper processes."
+                               Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                  </StackPanel>
+                  <TextBox x:Name="SearchBox" DockPanel.Dock="Right" Width="230" VerticalAlignment="Center"
+                           TextChanged="SearchBox_TextChanged" ToolTip="Filter by app name or process name"/>
+                </DockPanel>
+                <DataGrid x:Name="GroupsGrid" Height="315" AutoGenerateColumns="False" CanUserSortColumns="True"
+                          SelectionChanged="GroupsGrid_SelectionChanged">
+                  <DataGrid.Columns>
+                    <DataGridTextColumn Header="APPLICATION" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTextColumn Header="COUNT" Binding="{Binding ProcessCount}" Width="80"/>
+                    <DataGridTextColumn Header="CPU" Binding="{Binding CpuDisplay}" Width="100"/>
+                    <DataGridTextColumn Header="WORKING SET" Binding="{Binding MemoryDisplay}" Width="130"/>
+                  </DataGrid.Columns>
+                </DataGrid>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource PanelCard}" Margin="0,18,0,0">
+              <StackPanel>
+                <TextBlock x:Name="GroupNameText" Text="Select an application" FontSize="16" FontWeight="SemiBold"/>
+                <TextBlock x:Name="GroupDescriptionText" Text="Individual processes will appear here." Style="{StaticResource MutedText}"
+                           TextWrapping="Wrap" Margin="0,6,0,16"/>
+                <DataGrid x:Name="ProcessDetailsGrid" Height="215" AutoGenerateColumns="False" CanUserSortColumns="True">
+                  <DataGrid.Columns>
+                    <DataGridTextColumn Header="PROCESS" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="85"/>
+                    <DataGridTextColumn Header="CPU" Binding="{Binding CpuDisplay}" Width="100"/>
+                    <DataGridTextColumn Header="WORKING SET" Binding="{Binding MemoryDisplay}" Width="135"/>
+                  </DataGrid.Columns>
+                </DataGrid>
+                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                  <Button Content="Open file location" Style="{StaticResource OutlineButton}"
+                          Click="OpenLocation_Click" Margin="0,0,10,0"/>
+                  <Button Content="End selected process" Style="{StaticResource OutlineButton}"
+                          Click="EndProcess_Click"/>
+                </StackPanel>
+                <TextBlock Text="End Process affects one selected PID only and always asks for confirmation."
+                           Style="{StaticResource MutedText}" Margin="0,11,0,0" TextWrapping="Wrap"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- PERFORMANCE -->
+          <StackPanel x:Name="PerformancePage" Visibility="Collapsed">
+            <Border Style="{StaticResource PanelCard}" Margin="0,0,0,18">
+              <StackPanel>
+                <DockPanel Margin="0,0,0,15">
+                  <TextBlock Text="CPU history" FontSize="16" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="HistoryCpuValue" Text="—" Foreground="{StaticResource AccentBrush}"
+                             FontSize="15" FontWeight="SemiBold" DockPanel.Dock="Right"/>
+                </DockPanel>
+                <graphs:TrendGraph x:Name="CpuHistoryChart" Height="180"/>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource PanelCard}" Margin="0,0,0,18">
+              <StackPanel>
+                <DockPanel Margin="0,0,0,15">
+                  <TextBlock Text="Memory pressure" FontSize="16" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="HistoryMemoryValue" Text="—" Foreground="{StaticResource AccentBrush}"
+                             FontSize="15" FontWeight="SemiBold" DockPanel.Dock="Right"/>
+                </DockPanel>
+                <graphs:TrendGraph x:Name="MemoryHistoryChart" Height="180"/>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource PanelCard}">
+              <StackPanel>
+                <DockPanel Margin="0,0,0,15">
+                  <TextBlock Text="Download throughput" FontSize="16" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="HistoryNetworkValue" Text="—" Foreground="{StaticResource AccentBrush}"
+                             FontSize="15" FontWeight="SemiBold" DockPanel.Dock="Right"/>
+                </DockPanel>
+                <graphs:TrendGraph x:Name="NetworkHistoryChart" Height="150"/>
+                <TextBlock Text="Session history is held in memory and resets when Kerlo closes. Export it before exiting."
+                           Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,14,0,0"/>
+                <Button Content="Export session CSV" Style="{StaticResource PrimaryButton}" Click="Export_Click"
+                        HorizontalAlignment="Left" Margin="0,15,0,0"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- STARTUP -->
+          <StackPanel x:Name="StartupPage" Visibility="Collapsed">
+            <Border Style="{StaticResource PanelCard}">
+              <StackPanel>
+                <TextBlock Text="What starts with Windows" FontSize="17" FontWeight="SemiBold"/>
+                <TextBlock Text="Standard Run registry entries only. Scheduled tasks, services and Start Menu shortcuts are not included."
+                           Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,7,0,17"/>
+                <DataGrid x:Name="StartupGrid" Height="410" AutoGenerateColumns="False" CanUserSortColumns="True">
+                  <DataGrid.Columns>
+                    <DataGridTextColumn Header="NAME" Binding="{Binding Name}" Width="190"/>
+                    <DataGridTextColumn Header="SCOPE" Binding="{Binding RegistryLocation}" Width="150"/>
+                    <DataGridTextColumn Header="COMMAND" Binding="{Binding Command}" Width="*"/>
+                  </DataGrid.Columns>
+                </DataGrid>
+                <TextBlock Text="Kerlo does not disable startup entries automatically. Review unfamiliar entries before making system changes."
+                           Style="{StaticResource MutedText}" Margin="0,14,0,0" TextWrapping="Wrap"/>
+                <Button Content="Refresh entries" Style="{StaticResource OutlineButton}" HorizontalAlignment="Left"
+                        Click="RefreshStartup_Click" Margin="0,15,0,0"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- SETTINGS -->
+          <StackPanel x:Name="SettingsPage" Visibility="Collapsed">
+            <Border Style="{StaticResource PanelCard}">
+              <StackPanel>
+                <TextBlock Text="Monitoring preferences" FontSize="17" FontWeight="SemiBold"/>
+                <TextBlock Text="Choose how often Kerlo reads your system. Slower refresh rates reduce monitoring overhead."
+                           Style="{StaticResource MutedText}" Margin="0,7,0,22"/>
+                <TextBlock Text="Refresh interval" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,9"/>
+                <ComboBox x:Name="RefreshCombo" Width="200" HorizontalAlignment="Left"
+                          SelectionChanged="RefreshCombo_SelectionChanged">
+                  <ComboBoxItem Content="Every second" Tag="1"/>
+                  <ComboBoxItem Content="Every 2 seconds" Tag="2"/>
+                  <ComboBoxItem Content="Every 5 seconds" Tag="5"/>
+                </ComboBox>
+                <CheckBox x:Name="TopmostOption" Content="Keep Kerlo above other windows"
+                          Checked="TopmostOption_Changed" Unchecked="TopmostOption_Changed" Margin="0,26,0,0"/>
+                <Separator Background="#2D3B45" Margin="0,25,0,20"/>
+                <TextBlock Text="Privacy and reliability" FontWeight="SemiBold" FontSize="15"/>
+                <TextBlock Text="All sampled performance data stays on this device. Kerlo does not include account login, analytics collection, cloud AI, or automated system optimization."
+                           Foreground="{StaticResource MutedBrush}" FontSize="13" TextWrapping="Wrap" LineHeight="21"
+                           Margin="0,10,0,0"/>
+                <TextBlock Text="Kerlo Free · 0.1 preview" Foreground="{StaticResource AccentBrush}"
+                           FontSize="13" FontWeight="SemiBold" Margin="0,26,0,0"/>
+                <TextBlock Text="Some hardware counters depend on Windows and GPU drivers. Unavailable metrics are shown explicitly."
+                           Style="{StaticResource MutedText}" Margin="0,9,0,0" TextWrapping="Wrap"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Grid>
+      </ScrollViewer>
+
+      <Border Grid.Row="2" BorderBrush="#2C3A46" BorderThickness="0,1,0,0" Padding="34,11">
+        <DockPanel>
+          <TextBlock Text="KERLO  /  LOCALLY MEASURED" Foreground="#788F9C" FontSize="10" FontWeight="SemiBold"/>
+          <TextBlock x:Name="StatusText" Text="Preparing live system metrics…" Foreground="#9DAFB8"
+                     DockPanel.Dock="Right" HorizontalAlignment="Right" FontSize="11"/>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</Window>
